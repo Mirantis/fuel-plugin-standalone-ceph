@@ -1,11 +1,11 @@
 # Plugin name
 name: detach-ceph-mon
 # Human-readable name for your plugin
-title: Title for detach-ceph-mon plugin
+title: Detached Ceph Monitor 
 # Plugin version
 version: '1.0.0'
 # Description
-description: Enable to use plugin X for Neutron
+description: Detach ceph-mon from controller role
 # Required fuel version
 fuel_version: ['7.0']
 # Specify license of your plugin

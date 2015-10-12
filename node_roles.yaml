@@ -1,8 +1,8 @@
-detach-ceph-mon:
+detached-ceph-mon:
   # Role name
-  name: "Set here the name for the role. This name will be displayed in the Fuel web UI"
+  name: "Storage - Ceph Mon"
   # Role description
-  description: "Write description for your role"
+  description: "Ceph Monitor maintains maps of the cluster state, including the monitor map, the OSD map, the Placement Group (PG) map, and the CRUSH map. Ceph maintains a history (called an “epoch”) of each state change in the Ceph Monitors, Ceph OSD Daemons, and PGs."
   # If primaty then during orchestration this role will be
   # splitted into primary-role and role
   has_primary: false
@@ -11,3 +11,5 @@ detach-ceph-mon:
   # Weight that will be used to sort out the
   # roles on the Fuel web UI
   weight: 1000
+  concflicts:
+    - controller

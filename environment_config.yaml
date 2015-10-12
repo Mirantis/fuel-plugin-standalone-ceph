@@ -1,7 +1,4 @@
 attributes:
-  detach-ceph-mon_text:
-    value: 'Set default value'
-    label: 'Text field'
-    description: 'Description for text field'
-    weight: 25
-    type: "text"
+  metadata:
+    label: 'Detach Ceph Monitor Plugin'
+    weight: 90

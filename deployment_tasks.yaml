@@ -1,19 +1,35 @@
 # These tasks will be merged into deployment graph. Here you
 # can specify new tasks for any roles, even built-in ones.
 
-- id: detach-ceph-mon
-  type: group
-  role: [detach-ceph-mon]
+- id: ceph-mon
+  type: skipped
 
-- id: detach-ceph-mon-deployment-puppet
+- id: standalone-ceph-mon
   type: puppet
-  groups: [detach-ceph-mon]
-  required_for: [deploy_end]
-  requires: [deploy_start]
+  groups: [detached-ceph-mon]
+  required_for: [deploy_end, controller_remaining_tasks]
+  requires: [openstack-controller]
   parameters:
-    puppet_manifest: "deploy.pp"
-    puppet_modules: ""
+    puppet_manifest: /etc/puppet/modules/osnailyfacter/modular/ceph/mon.pp
+    puppet_modules: /etc/puppet/modules
     timeout: 3600
+
+- id: detached-ceph-mon
+  type: group
+  role: [detached-ceph-mon]
+  parameters:
+    strategy:
+      type: parallel
+
+#- id: detach-ceph-mon-deployment-puppet
+#  type: puppet
+#  groups: [detach-ceph-mon]
+#  required_for: [deploy_end]
+#  requires: [deploy_start]
+#  parameters:
+#    puppet_manifest: "deploy.pp"
+#    puppet_modules: ""
+#    timeout: 3600
 
 #- id: detach-ceph-mon-post-deployment-sh
 #  type: shell

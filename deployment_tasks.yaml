@@ -4,6 +4,22 @@
 - id: ceph-mon
   type: skipped
 
+- id: ceph-radosgw
+  type: skipped
+
+- id: top-role-ceph-osd
+  type: skipped
+
+- id: standalone-top-role-ceph-osd
+  type: puppet
+  groups: [ceph-osd]
+  required_for: [deploy_end]
+  requires: [hosts, firewall,detached-ceph-mon]
+  parameters:
+    puppet_manifest: /etc/puppet/modules/osnailyfacter/modular/ceph/ceph-osd.pp
+    puppet_modules: /etc/puppet/modules
+    timeout: 3600
+
 - id: standalone-ceph-mon
   type: puppet
   groups: [detached-ceph-mon]
@@ -13,6 +29,32 @@
     puppet_manifest: /etc/puppet/modules/osnailyfacter/modular/ceph/mon.pp
     puppet_modules: /etc/puppet/modules
     timeout: 3600
+
+- id: standalone-ceph-radosgw
+  type: puppet
+  groups: [detached-ceph-mon]
+  required_for: [deploy_end, controller_remaining_tasks]
+  requires: [apache, standalone-ceph-mon]
+  parameters:
+    puppet_manifest: /etc/puppet/modules/osnailyfacter/modular/ceph/radosgw.pp
+    puppet_modules: /etc/puppet/modules
+    timeout: 3600
+  test_pre:
+    cmd: ruby /etc/puppet/modules/osnailyfacter/modular/ceph/radosgw_pre.rb
+  test_post:
+    cmd: ruby /etc/puppet/modules/osnailyfacter/modular/ceph/radosgw_post.rb
+
+- id: standalone-ceph-apache
+  type: puppet
+  groups: [detached-ceph-mon]
+  required_for: [keystone]
+  requires: [openstack-haproxy]
+  parameters:
+    puppet_manifest: /etc/puppet/modules/osnailyfacter/modular/apache/apache.pp
+    puppet_modules: /etc/puppet/modules
+    timeout: 1200
+  test_post:
+    cmd: ruby /etc/puppet/modules/osnailyfacter/modular/apache/apache_post.rb 
 
 - id: detached-ceph-mon
   type: group

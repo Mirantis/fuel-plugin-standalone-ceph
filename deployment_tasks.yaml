@@ -10,11 +10,112 @@
 - id: top-role-ceph-osd
   type: skipped
 
+- id: hiera
+  type: puppet
+  groups: [primary-controller, controller, cinder, cinder-vmware, compute, ceph-osd, detached-ceph-mon, zabbix-server, primary-mongo, mongo, virt]
+  requires: [deploy_start]
+  required_for: [deploy_end]
+  parameters:
+    puppet_manifest: /etc/puppet/modules/osnailyfacter/modular/hiera/hiera.pp
+    puppet_modules: /etc/puppet/modules
+    timeout: 3600
+  test_pre:
+    cmd: python /etc/puppet/modules/osnailyfacter/modular/hiera/hiera_pre.py
+  test_post:
+    cmd: python /etc/puppet/modules/osnailyfacter/modular/hiera/hiera_post.py
+
+- id: tools
+  type: puppet
+  groups: [primary-controller, controller, cinder, cinder-vmware, compute, ceph-osd, zabbix-server, primary-mongo, mongo, virt, detached-ceph-mon]
+  required_for: [deploy_end]
+  requires: [logging]
+  parameters:
+    puppet_manifest: /etc/puppet/modules/osnailyfacter/modular/tools/tools.pp
+    puppet_modules: /etc/puppet/modules
+    timeout: 3600
+  test_post:
+    cmd: ruby /etc/puppet/modules/osnailyfacter/modular/tools/tools_post.rb
+
+- id: netconfig
+  type: puppet
+  groups: [primary-controller, controller, cinder, cinder-vmware, compute, ceph-osd, zabbix-server, primary-mongo, mongo, virt, detached-ceph-mon]
+  required_for: [deploy_end]
+  requires: [tools]
+  parameters:
+    puppet_manifest: /etc/puppet/modules/osnailyfacter/modular/netconfig/netconfig.pp
+    puppet_modules: /etc/puppet/modules
+    timeout: 3600
+  test_pre:
+    cmd: ruby /etc/puppet/modules/osnailyfacter/modular/netconfig/netconfig_pre.rb
+  test_post:
+    cmd: ruby /etc/puppet/modules/osnailyfacter/modular/netconfig/netconfig_post.rb
+
+- id: connectivity_tests
+  type: puppet
+  groups: [primary-controller, controller, cinder, cinder-vmware, compute, ceph-osd, zabbix-server, primary-mongo, mongo, virt, detached-ceph-mon]
+  required_for: [firewall, hosts]
+  requires: [netconfig]
+  parameters:
+    puppet_manifest: /etc/puppet/modules/osnailyfacter/modular/netconfig/connectivity_tests.pp
+    puppet_modules: /etc/puppet/modules
+    timeout: 3600
+    cwd: /
+
+- id: globals
+  type: puppet
+  groups: [primary-controller, controller,
+           cinder, cinder-vmware, compute, ceph-osd,
+           zabbix-server, primary-mongo, mongo, virt, detached-ceph-mon]
+  required_for: [deploy_end]
+  requires: [hiera]
+  parameters:
+    puppet_manifest: /etc/puppet/modules/osnailyfacter/modular/globals/globals.pp
+    puppet_modules: /etc/puppet/modules
+    timeout: 3600
+  test_pre:
+    cmd: python /etc/puppet/modules/osnailyfacter/modular/globals/globals_pre.py
+  test_post:
+    cmd: python /etc/puppet/modules/osnailyfacter/modular/globals/globals_post.py
+
+- id: fuel_pkgs
+  type: puppet
+  groups: [primary-controller, controller, cinder, cinder-vmware, compute, ceph-osd, zabbix-server, primary-mongo, mongo, detached-ceph-mon]
+  requires: [deploy_start]
+  required_for: [hiera]
+  parameters:
+    puppet_manifest: /etc/puppet/modules/osnailyfacter/modular/fuel_pkgs/fuel_pkgs.pp
+    puppet_modules: /etc/puppet/modules
+    timeout: 600
+
+- id: logging
+  type: puppet
+  groups: [primary-controller, controller, cinder, cinder-vmware, compute, ceph-osd, zabbix-server, primary-mongo, mongo, virt, detached-ceph-mon]
+  required_for: [deploy_end]
+  requires: [globals]
+  parameters:
+    puppet_manifest: /etc/puppet/modules/osnailyfacter/modular/logging/logging.pp
+    puppet_modules: /etc/puppet/modules
+    timeout: 3600
+
+- id: hosts
+  type: puppet
+  groups: [primary-controller, controller, cinder,cinder-vmware, compute, ceph-osd, zabbix-server, primary-mongo, mongo, detached-ceph-mon]
+  required_for: [deploy_end]
+  requires: [netconfig]
+  parameters:
+    puppet_manifest: /etc/puppet/modules/osnailyfacter/modular/hosts/hosts.pp
+    puppet_modules: /etc/puppet/modules
+    timeout: 3600
+  test_pre:
+    cmd: ruby /etc/puppet/modules/osnailyfacter/modular/hosts/hosts_pre.rb
+  test_post:
+    cmd: ruby /etc/puppet/modules/osnailyfacter/modular/hosts/hosts_post.rb
+
 - id: standalone-top-role-ceph-osd
   type: puppet
   groups: [ceph-osd]
   required_for: [deploy_end]
-  requires: [hosts, firewall,detached-ceph-mon]
+  requires: [hosts,firewall]
   parameters:
     puppet_manifest: /etc/puppet/modules/osnailyfacter/modular/ceph/ceph-osd.pp
     puppet_modules: /etc/puppet/modules
@@ -23,8 +124,8 @@
 - id: standalone-ceph-mon
   type: puppet
   groups: [detached-ceph-mon]
-  required_for: [deploy_end, controller_remaining_tasks]
-  requires: [openstack-controller]
+  required_for: [deploy_end]
+  requires: [connectivity_tests]
   parameters:
     puppet_manifest: /etc/puppet/modules/osnailyfacter/modular/ceph/mon.pp
     puppet_modules: /etc/puppet/modules
@@ -59,6 +160,8 @@
 - id: detached-ceph-mon
   type: group
   role: [detached-ceph-mon]
+  requires: [deploy_start]
+  required_for: [ceph-osd]
   parameters:
     strategy:
       type: parallel

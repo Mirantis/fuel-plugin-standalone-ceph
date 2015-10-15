@@ -78,7 +78,7 @@
   test_post:
     cmd: ruby /etc/puppet/modules/osnailyfacter/modular/tools/tools_post.rb
 
-- id: netconfig-for-stanalone-ceph
+- id: netconfig-for-standalone-ceph
   type: puppet
   groups: [primary-standalone-ceph-mon, standalone-ceph-mon]
   required_for: [deploy_end]
@@ -95,7 +95,7 @@
 - id: connectivity_tests-for-standalone-ceph
   type: puppet
   groups: [primary-standalone-ceph-mon, standalone-ceph-mon]
-  required_for: [firewall-for-standalone-ceph, hosts-for-standalone-ceph]
+  required_for: [firewall, hosts-for-standalone-ceph]
   requires: [netconfig-for-standalone-ceph]
   parameters:
     puppet_manifest: /etc/puppet/modules/osnailyfacter/modular/netconfig/connectivity_tests.pp

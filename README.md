@@ -3,6 +3,15 @@ standalone-ceph
 
 Plugin description
 
+# Features
+
+# TODO
+
+  * Isolation between plugins - copy each task to separate one
+  * Rados Gateway separation
+  * UI restriction (don't allow standalone-ceph-mon, standalone-ceph-radosgw and controller) FIXME(pchechetin): Need more info about this case
+  * Documentaion
+
 # Test scenarious
   
   * Plugin enabled

@@ -1,0 +1,7 @@
+<%
+  require 'yaml'
+  hash = {} 
+  hash.store "ceph_monitor_nodes", @ceph_monitor_nodes
+  hash.store "ceph_primary_monitor_node", @ceph_primary_monitor_node
+-%>
+<%= YAML.dump hash -%>

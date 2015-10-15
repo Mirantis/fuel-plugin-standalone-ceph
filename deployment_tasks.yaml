@@ -36,7 +36,7 @@
 - id: hiera-override-for-standalone-ceph
   type: puppet
   groups: [ceph-osd,primary-standalone-ceph-mon,standalone-ceph-mon,compute]
-  requires: [globals]
+  requires: [globals-for-standalone-ceph]
   required_for: [task-standalone-ceph-mon,top-role-ceph-osd,ceph-compute]
   parameters:
     puppet_manifest: 'hiera-override.pp'
@@ -51,7 +51,7 @@
 #   type: skipped
 
 # Dependent task
-- id: hiera-for-stanalone-ceph
+- id: hiera-for-standalone-ceph
   type: puppet
   groups: [primary-standalone-ceph-mon,standalone-ceph-mon]
   requires: [deploy_start]

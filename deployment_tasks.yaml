@@ -26,7 +26,7 @@
 - id: task-standalone-ceph-mon
   type: puppet
   required_for: [deploy_end]
-  requires: [connectivity_tests,hiera-override-for-standalone-ceph]
+  requires: [connectivity_tests-for-standalone-ceph,hiera-override-for-standalone-ceph]
   parameters:
     puppet_manifest: 'mon.pp'
     puppet_modules: 'modules:/etc/puppet/modules'

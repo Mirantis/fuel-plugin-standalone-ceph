@@ -1,25 +1,25 @@
 standalone-ceph
 ============
 
-Plugin description
+In pure Fuel, Ceph Monitor is deployed on each controller.
+This plugin detaches Ceph Monitor from controller and creates new role called standalone-ceph-mon.
 
 # Features
 
+  * Isolation between plugins (The plugin doesn't interfere with other plugins, and depends on only Fuel inself.
+
 # TODO
 
-  * Isolation between plugins - copy each task to separate one
   * Rados Gateway separation
-  * UI restriction (don't allow standalone-ceph-mon, standalone-ceph-radosgw and controller) FIXME(pchechetin): Need more info about this case
-  * Documentaion
 
 # Test scenarious
   
   * Plugin enabled
-    - Expected behavior: Ceph Mon role is deployed on separate node. Controller node doesn't have Ceph Mon process running.
+    - Expected behavior: Ceph Monitor role is deployed on a separate node. Controller node doesn't have Ceph Monintor process running.
     * RadosGW enabled
      - Expected behavior:
     * RadosGW disabled
      - Expected behavior:
 
   * Plugin disabled
-    - Expected behavior: Ceph Mon role is deployed on Controller node and has Ceph Mon process running.
+    - Expected behavior: Ceph Monintor role is deployed on Controller node and has Ceph Monitor process running.

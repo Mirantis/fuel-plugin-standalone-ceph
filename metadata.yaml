@@ -3,7 +3,7 @@ name: standalone-ceph
 # Human-readable name for your plugin
 title: Standalone Ceph 
 # Plugin version
-version: '1.0.0'
+version: '1.0.1'
 # Description
 description: Detach Ceph Monitor and Rados Gateway from controller role
 # Required fuel version

@@ -7,7 +7,7 @@
   role: [primary-standalone-ceph-mon]
   requires: [deploy_start]
   required_for: [ceph-osd]
-  tasks: [task-standalone-ceph-mon,hiera-override-for-standalone-ceph]
+  tasks: [enable_rados-for-standalone-ceph,standalone-ceph-radosgw,task-standalone-ceph-mon,hiera-override-for-standalone-ceph,firewall,hiera,tools,netconfig,connectivity_tests,globals,fuel_pkgs,logging,hosts,apache,openstack-haproxy,virtual_ips,ssl-add-trust-chain]
   parameters:
     strategy:
       type: one_by_one
@@ -17,196 +17,157 @@
   role: [standalone-ceph-mon]
   requires: [primary-standalone-ceph-mon]
   required_for: [deploy_end]
-  tasks: [task-standalone-ceph-mon,hiera-override-for-standalone-ceph]
+  tasks: [enable_rados-for-standalone-ceph,standalone-ceph-radosgw,task-standalone-ceph-mon,hiera-override-for-standalone-ceph,firewall,hiera,tools,netconfig,connectivity_tests,globals,fuel_pkgs,logging,hosts,apache,openstack-haproxy,virtual_ips,ssl-add-trust-chain]
   parameters:
     strategy:
       type: parallel
 
-# Product tasks
-- id: task-standalone-ceph-mon
-  type: puppet
-  required_for: [deploy_end]
-  requires: [connectivity_tests-for-standalone-ceph,hiera-override-for-standalone-ceph]
-  parameters:
-    puppet_manifest: 'mon.pp'
-    puppet_modules: 'modules:/etc/puppet/modules'
-    timeout: 3600
+# Turn off ceph on controller
+- id: ceph-mon
+  type: skipped
+
+- id: ceph-radosgw
+  type: skipped
+
+- id: openstack-haproxy-radosgw
+  type: skipped
+
+#- id: ceph_create_pools
+#  type: skipped
+
+#- id: ceph_ready_check
+#  type: skipped
+
+- id: enable_rados
+  type: skipped
 
 # Override hiera for at least primary_mon value
 - id: hiera-override-for-standalone-ceph
   type: puppet
-  groups: [ceph-osd,primary-standalone-ceph-mon,standalone-ceph-mon,compute]
-  requires: [globals-for-standalone-ceph]
-  required_for: [task-standalone-ceph-mon,top-role-ceph-osd,ceph-compute]
+  groups: [ceph-osd,primary-standalone-ceph-mon,standalone-ceph-mon,compute,primary-controller,controller]
+  requires: [globals]
+  required_for: [task-standalone-ceph-mon,top-role-ceph-osd,deploy_end]
   parameters:
     puppet_manifest: 'hiera-override.pp'
     puppet_modules: 'modules:/etc/puppet/modules'
     timeout: 120
 
-# Turn off ceph-mon on controller
-- id: ceph-mon
-  type: skipped
+# Standalone mons
+- id: task-standalone-ceph-mon
+  type: puppet
+  required_for: [deploy_end]
+  requires: [connectivity_tests,hiera]
+  parameters:
+    puppet_manifest: 'mon.pp'
+    puppet_modules: 'modules:/etc/puppet/modules'
+    timeout: 3600
 
-# - id: ceph-radosgw
-#   type: skipped
-
-# Dependent task
-- id: hiera-for-standalone-ceph
+#RadosGW deployment
+- id: cluster-for-standalone-ceph
   type: puppet
   groups: [primary-standalone-ceph-mon,standalone-ceph-mon]
-  requires: [deploy_start]
+  required_for: [virtual_ips,deploy_end]
+  requires: [hosts, firewall, deploy_start]
+  parameters:
+    puppet_manifest: 'cluster.pp'
+    puppet_modules: 'modules:/etc/puppet/modules'
+    timeout: 3600
+
+- id: cluster-haproxy-for-standalone-ceph
+  type: puppet
+  groups: [primary-standalone-ceph-mon,standalone-ceph-mon]
+  required_for: [deploy_end]
+  requires: [deploy_start, cluster-for-standalone-ceph, virtual_ips]
+  parameters:
+    puppet_manifest: 'cluster-haproxy.pp'
+    puppet_modules: 'modules:/etc/puppet/modules'
+    timeout: 3600
+
+- id: openstack-haproxy-radosgw-for-standalone-ceph
+  type: puppet
+  groups: [primary-standalone-ceph-mon,standalone-ceph-mon]
+  required_for: [openstack-haproxy, deploy_end]
+  requires: [deploy_start, cluster-haproxy-for-standalone-ceph, hiera-override-for-standalone-ceph]
+  parameters:
+    puppet_manifest: 'openstack-haproxy-radosgw.pp'
+    puppet_modules: 'modules:/etc/puppet/modules'
+    timeout: 300
+
+- id: standalone-ceph-radosgw
+  type: puppet
+  groups: [primary-standalone-ceph-mon,standalone-ceph-mon]
+  required_for: [deploy_end]
+  requires: [apache,task-standalone-ceph-mon]
+  parameters:
+    puppet_manifest: 'radosgw.pp'
+    puppet_modules: 'modules:/etc/puppet/modules'
+    timeout: 3600
+
+- id: enable_rados-for-standalone-ceph
+  type: puppet
+  groups: [primary-standalone-ceph-mon,standalone-ceph-mon]
+  condition: "settings:storage.objects_ceph.value == true"
+  requires: [standalone-ceph-radosgw]
   required_for: [deploy_end]
   parameters:
-    puppet_manifest: /etc/puppet/modules/osnailyfacter/modular/hiera/hiera.pp
+    puppet_manifest: /etc/puppet/modules/osnailyfacter/modular/ceph/enable_rados.pp
     puppet_modules: /etc/puppet/modules
-    timeout: 3600
-  test_pre:
-    cmd: python /etc/puppet/modules/osnailyfacter/modular/hiera/hiera_pre.py
-  test_post:
-    cmd: python /etc/puppet/modules/osnailyfacter/modular/hiera/hiera_post.py
+    timeout: 180
+    cwd: /
 
+#POSTDEPLOYMENT
+#- id: ceph_create_pools-for-standalone-ceph
+#  type: puppet
+#  role: [primary-standalone-ceph-mon,standalone-ceph-mon]
+#  requires: [post_deployment_start]
+#  required_for: [ceph_ready_check-for-standalone-ceph]
+#  condition: "settings:storage.objects_ceph.value == true or settings:storage.images_ceph.value == true or settings:storage.volumes_ceph.value == true or settings:storage.ephemeral_ceph.value == true"
+#  parameters:
+#    puppet_manifest: /etc/puppet/modules/osnailyfacter/modular/ceph/ceph_pools.pp
+#    puppet_modules: /etc/puppet/modules
+#    timeout: 3600
+#    cwd: /
 
-- id: tools-for-standalone-ceph
+#- id: ceph_ready_check-for-standalone-ceph
+#  type: shell
+#  role: [primary-standalone-ceph-mon]
+#  condition: "settings:storage.objects_ceph.value == true or settings:storage.images_ceph.value == true or settings:storage.volumes_ceph.value == true or settings:storage.ephemeral_ceph.value == true"
+#  requires: [post_deployment_start]
+#  required_for: [enable_rados-for-standalone-ceph, upload_cirros]
+#  parameters:
+#    cmd: ruby /etc/puppet/modules/osnailyfacter/modular/ceph/ceph_ready_check.rb
+#    timeout: 1800
+
+- id: ceph_client
   type: puppet
-  groups: [primary-standalone-ceph-mon, standalone-ceph-mon]
-  required_for: [deploy_end]
-  requires: [logging-for-standalone-ceph]
+  role: [primary-controller,controller]
+  requires: [post_deployment_start]
+  required_for: [ceph_create_pools,post_deployment_end]
+  condition: "settings:storage.objects_ceph.value == true or settings:storage.images_ceph.value == true or settings:storage.volumes_ceph.value == true or settings:storage.ephemeral_ceph.value == true"
   parameters:
-    puppet_manifest: /etc/puppet/modules/osnailyfacter/modular/tools/tools.pp
-    puppet_modules: /etc/puppet/modules
+    puppet_manifest: 'ceph_client.pp'
+    puppet_modules: 'modules:/etc/puppet/modules'
     timeout: 3600
-  test_post:
-    cmd: ruby /etc/puppet/modules/osnailyfacter/modular/tools/tools_post.rb
 
-- id: netconfig-for-standalone-ceph
+- id: dns-client-for-standalone-ceph
   type: puppet
-  groups: [primary-standalone-ceph-mon, standalone-ceph-mon]
-  required_for: [deploy_end]
-  requires: [tools-for-standalone-ceph]
+  role: [primary-standalone-ceph-mon,standalone-ceph-mon]
+  requires: [post_deployment_start]
+  required_for: [ntp-client-for-standalone-ceph]
   parameters:
-    puppet_manifest: /etc/puppet/modules/osnailyfacter/modular/netconfig/netconfig.pp
-    puppet_modules: /etc/puppet/modules
-    timeout: 3600
-  test_pre:
-    cmd: ruby /etc/puppet/modules/osnailyfacter/modular/netconfig/netconfig_pre.rb
-  test_post:
-    cmd: ruby /etc/puppet/modules/osnailyfacter/modular/netconfig/netconfig_post.rb
-
-- id: connectivity_tests-for-standalone-ceph
-  type: puppet
-  groups: [primary-standalone-ceph-mon, standalone-ceph-mon]
-  required_for: [firewall, hosts-for-standalone-ceph]
-  requires: [netconfig-for-standalone-ceph]
-  parameters:
-    puppet_manifest: /etc/puppet/modules/osnailyfacter/modular/netconfig/connectivity_tests.pp
+    puppet_manifest: /etc/puppet/modules/osnailyfacter/modular/dns/dns-client.pp
     puppet_modules: /etc/puppet/modules
     timeout: 3600
     cwd: /
 
-- id: globals-for-standalone-ceph
+- id: ntp-client-for-standalone-ceph
   type: puppet
-  groups: [primary-standalone-ceph-mon, standalone-ceph-mon]
-  required_for: [deploy_end]
-  requires: [hiera-for-standalone-ceph]
+  role: [primary-standalone-ceph-mon,standalone-ceph-mon]
+  requires: [dns-client-for-standalone-ceph]
+  required_for: [post_deployment_end]
   parameters:
-    puppet_manifest: /etc/puppet/modules/osnailyfacter/modular/globals/globals.pp
+    puppet_manifest: /etc/puppet/modules/osnailyfacter/modular/ntp/ntp-client.pp
     puppet_modules: /etc/puppet/modules
     timeout: 3600
-  test_pre:
-    cmd: python /etc/puppet/modules/osnailyfacter/modular/globals/globals_pre.py
-  test_post:
-    cmd: python /etc/puppet/modules/osnailyfacter/modular/globals/globals_post.py
+    cwd: /
 
-- id: fuel_pkgs-for-standalone-ceph
-  type: puppet
-  groups: [primary-standalone-ceph-mon, standalone-ceph-mon]
-  requires: [deploy_start]
-  required_for: [hiera-for-standalone-ceph]
-  parameters:
-    puppet_manifest: /etc/puppet/modules/osnailyfacter/modular/fuel_pkgs/fuel_pkgs.pp
-    puppet_modules: /etc/puppet/modules
-    timeout: 600
-
-- id: logging-for-standalone-ceph
-  type: puppet
-  groups: [primary-standalone-ceph-mon, standalone-ceph-mon]
-  required_for: [deploy_end]
-  requires: [globals-for-standalone-ceph]
-  parameters:
-    puppet_manifest: /etc/puppet/modules/osnailyfacter/modular/logging/logging.pp
-    puppet_modules: /etc/puppet/modules
-    timeout: 3600
-
-- id: hosts-for-standalone-ceph
-  type: puppet
-  groups: [primary-standalone-ceph-mon, standalone-ceph-mon]
-  required_for: [deploy_end]
-  requires: [netconfig-for-standalone-ceph]
-  parameters:
-    puppet_manifest: /etc/puppet/modules/osnailyfacter/modular/hosts/hosts.pp
-    puppet_modules: /etc/puppet/modules
-    timeout: 3600
-  test_pre:
-    cmd: ruby /etc/puppet/modules/osnailyfacter/modular/hosts/hosts_pre.rb
-  test_post:
-    cmd: ruby /etc/puppet/modules/osnailyfacter/modular/hosts/hosts_post.rb
-
-# - id: standalone-ceph-radosgw
-#   type: puppet
-#   groups: [detached-ceph-mon]
-#   required_for: [deploy_end, controller_remaining_tasks]
-#   requires: [apache, standalone-ceph-mon]
-#   parameters:
-#     puppet_manifest: /etc/puppet/modules/osnailyfacter/modular/ceph/radosgw.pp
-#     puppet_modules: /etc/puppet/modules
-#     timeout: 3600
-#   test_pre:
-#     cmd: ruby /etc/puppet/modules/osnailyfacter/modular/ceph/radosgw_pre.rb
-#   test_post:
-#     cmd: ruby /etc/puppet/modules/osnailyfacter/modular/ceph/radosgw_post.rb
-
-
-# - id: standalone-ceph-apache
-#   type: puppet
-#   groups: [detached-ceph-mon]
-#   required_for: [keystone]
-#   requires: [openstack-haproxy]
-#   parameters:
-#     puppet_manifest: /etc/puppet/modules/osnailyfacter/modular/apache/apache.pp
-#     puppet_modules: /etc/puppet/modules
-#     timeout: 1200
-#   test_post:
-#     cmd: ruby /etc/puppet/modules/osnailyfacter/modular/apache/apache_post.rb 
-
-
-#- id: detach-ceph-mon-deployment-puppet
-#  type: puppet
-#  groups: [detach-ceph-mon]
-#  required_for: [deploy_end]
-#  requires: [deploy_start]
-#  parameters:
-#    puppet_manifest: "deploy.pp"
-#    puppet_modules: ""
-#    timeout: 3600
-
-#- id: detach-ceph-mon-post-deployment-sh
-#  type: shell
-#  role: [detach-ceph-mon]
-#  required_for: [post_deployment_end]
-#  requires: [post_deployment_start]
-#  parameters:
-#    cmd: echo post_deployment_task_executed > /tmp/post_deployment
-#    retries: 3
-#    interval: 20
-#    timeout: 180
-
-#- id: detach-ceph-mon-pre-deployment-sh
-#  type: shell
-#  role: [detach-ceph-mon]
-#  required_for: [pre_deployment_end]
-#  requires: [pre_deployment_start]
-#  parameters:
-#    cmd: echo pre_deployment_task_executed > /tmp/pre_deployment
-#    retries: 3
-#    interval: 20
-#    timeout: 180

@@ -1,7 +1,7 @@
 # ceph configuration and resource relations
 # TODO: split ceph module to submodules instead of using case with roles
 
-class ceph (
+class ceph_override (
       # General settings
       $mon_hosts,
       $mon_ip_addresses,
@@ -95,8 +95,30 @@ class ceph (
     # the regex above includes all roles that require ceph.conf
     include ceph::ssh
     include ceph::params
-    include ceph::conf
-    Class[['ceph::ssh', 'ceph::params']] -> Class['ceph::conf']
+
+    class { 'ceph_override::conf':
+      mon_addr                           => $mon_addr,
+      node_hostname                      => $node_hostname,
+      primary_mon                        => $primary_mon,
+      auth_supported                     => $auth_supported,
+      osd_journal_size                   => $osd_journal_size,
+      osd_mkfs_type                      => $osd_mkfs_type,
+      osd_pool_default_size              => $osd_pool_default_size,
+      osd_pool_default_min_size          => $osd_pool_default_min_size,
+      osd_pool_default_pg_num            => $osd_pool_default_pg_num,
+      osd_pool_default_pgp_num           => $osd_pool_default_pgp_num,
+      cluster_network                    => $cluster_network,
+      public_network                     => $public_network,
+      use_syslog                         => $use_syslog,
+      syslog_log_level                   => $syslog_log_level,
+      syslog_log_facility                => $syslog_log_facility,
+      osd_max_backfills                  => $osd_max_backfills,
+      osd_recovery_max_active            => $osd_recovery_max_active,
+      rbd_cache                          => $rbd_cache,
+      rbd_cache_writethrough_until_flush => $rbd_cache_writethrough_until_flush,
+    }
+
+    Class[['ceph::ssh', 'ceph::params']] -> Class['ceph_override::conf']
   }
 
   if hiera('role') =~ /controller|ceph/ {
@@ -104,7 +126,7 @@ class ceph (
       name    => $ceph::params::service_name,
       ensure  => 'running',
       enable  => true,
-      require => Class['ceph::conf']
+      require => Class['ceph_override::conf']
     }
     Package<| title == 'ceph' |> ~> Service['ceph']
     if !defined(Service['ceph']) {
@@ -114,12 +136,17 @@ class ceph (
 
   case hiera('role') {
     'primary-controller', 'controller', 'ceph-mon','primary-standalone-ceph-mon','standalone-ceph-mon': {
-      include ceph::mon
+     class {'::ceph::mon':
+       mon_hosts        => $mon_hosts,
+       mon_ip_addresses => $mon_ip_addresses,
+       mon_addr         => $mon_addr,
+       node_hostname    => $node_hostname,
+     }
 
-      Class['ceph::conf'] -> Class['ceph::mon'] ->
+      Class['ceph_override::conf'] -> Class['ceph::mon'] ->
       Service['ceph']
 
-      if ($::ceph::use_rgw) {
+      if ($use_rgw) {
         include ceph::radosgw
         Class['ceph::mon'] ->
         Class['ceph::radosgw']
@@ -133,7 +160,7 @@ class ceph (
     'ceph-osd': {
       if ! empty($osd_devices) {
         include ceph::osds
-        Class['ceph::conf'] -> Class['ceph::osds']
+        Class['ceph_override::conf'] -> Class['ceph::osds']
         Ceph_conf <||> ~> Service['ceph']
       }
     }

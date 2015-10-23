@@ -37,7 +37,7 @@ if $use_ceph {
   $ceph_public_network     = get_network_role_property('ceph/public', 'network')
   $mon_addr                = get_network_role_property('ceph/public', 'ipaddr')
 
-  class {'ceph':
+  class {'ceph_override':
     primary_mon              => $primary_mon,
     mon_hosts                => keys($mon_address_map),
     mon_ip_addresses         => values($mon_address_map),
@@ -59,37 +59,5 @@ if $use_ceph {
     rgw_keystone_admin_token => $keystone_hash['admin_token'],
     ephemeral_ceph           => $storage_hash['ephemeral_ceph']
   }
-
-  # if ($storage_hash['volumes_ceph']) {
-  #   include ::cinder::params
-  #   service { 'cinder-volume':
-  #     ensure     => 'running',
-  #     name       => $::cinder::params::volume_service,
-  #     hasstatus  => true,
-  #     hasrestart => true,
-  #   }
-
-  #   service { 'cinder-backup':
-  #     ensure     => 'running',
-  #     name       => $::cinder::params::backup_service,
-  #     hasstatus  => true,
-  #     hasrestart => true,
-  #   }
-
-  #   Class['ceph'] ~> Service['cinder-volume']
-  #   Class['ceph'] ~> Service['cinder-backup']
-  # }
-
-  # if ($storage_hash['images_ceph']) {
-  #   include ::glance::params
-  #   service { 'glance-api':
-  #     ensure     => 'running',
-  #     name       => $::glance::params::api_service_name,
-  #     hasstatus  => true,
-  #     hasrestart => true,
-  #   }
-
-  #   Class['ceph'] ~> Service['glance-api']
-  # }
 }
 

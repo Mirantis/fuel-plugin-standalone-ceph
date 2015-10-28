@@ -11,6 +11,10 @@ Exec { path => [ '/bin/', '/sbin/' , '/usr/bin/', '/usr/sbin/' ],
        cwd  => '/root',
 }
 
+package { $::ceph::params::package_radosgw:
+  ensure => present,
+}
+
 exec {'ceph-deploy config pull':
   command   => "ceph-deploy --overwrite-conf config pull ${primary_mon}",
   cwd       => '/etc/ceph',

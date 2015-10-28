@@ -5,7 +5,7 @@
 - id: primary-standalone-ceph-mon
   type: group
   role: [primary-standalone-ceph-mon]
-  requires: [deploy_start]
+  requires: [controller]
   required_for: [ceph-osd]
   tasks: [enable_rados-for-standalone-ceph,standalone-ceph-radosgw,task-standalone-ceph-mon,hiera-override-for-standalone-ceph,firewall,hiera,tools,netconfig,connectivity_tests,globals,fuel_pkgs,logging,hosts,apache,openstack-haproxy,virtual_ips,ssl-add-trust-chain]
   parameters:
@@ -142,7 +142,7 @@
   type: puppet
   role: [primary-controller,controller]
   requires: [post_deployment_start]
-  required_for: [ceph_create_pools,post_deployment_end]
+  required_for: [ceph_create_pools,ceilometer-radosgw-user,post_deployment_end]
   condition: "settings:storage.objects_ceph.value == true or settings:storage.images_ceph.value == true or settings:storage.volumes_ceph.value == true or settings:storage.ephemeral_ceph.value == true"
   parameters:
     puppet_manifest: 'ceph_client.pp'

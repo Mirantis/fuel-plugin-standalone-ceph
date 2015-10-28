@@ -103,11 +103,21 @@
     puppet_modules: 'modules:/etc/puppet/modules'
     timeout: 3600
 
+- id: standalone-ceph-rados-pki
+  type: puppet
+  groups: [primary-standalone-ceph-mon,standalone-ceph-mon]
+  required_for: [deploy_end]
+  requires: [standalone-ceph-radosgw]
+  parameters:
+    puppet_manifest: 'rados-pki.pp'
+    puppet_modules: 'modules:/etc/puppet/modules'
+    timeout: 3600
+
 - id: enable_rados-for-standalone-ceph
   type: puppet
   groups: [primary-standalone-ceph-mon,standalone-ceph-mon]
   condition: "settings:storage.objects_ceph.value == true"
-  requires: [standalone-ceph-radosgw]
+  requires: [standalone-ceph-rados-pki]
   required_for: [deploy_end]
   parameters:
     puppet_manifest: /etc/puppet/modules/osnailyfacter/modular/ceph/enable_rados.pp

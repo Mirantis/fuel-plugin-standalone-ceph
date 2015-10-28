@@ -46,7 +46,8 @@ file {'/etc/ceph/ceph.client.admin.keyring':
   group  => 'root',
 }
 
-Exec['ceph-deploy config pull'] ->
+Class['ceph::params'] ->
+  Exec['ceph-deploy config pull'] ->
     File['/root/ceph.conf'] ->
       Exec['ceph-deploy gatherkeys remote'] ->
         File['/etc/ceph/ceph.client.admin.keyring']

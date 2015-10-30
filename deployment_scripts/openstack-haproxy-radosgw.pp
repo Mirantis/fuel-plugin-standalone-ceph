@@ -1,4 +1,4 @@
-notice('MODULAR: openstack-haproxy-radosgw.pp')
+notice('MODULAR: standalone-ceph/openstack-haproxy-radosgw.pp')
 
 $network_metadata = hiera_hash('network_metadata')
 $storage_hash     = hiera_hash('storage', {})

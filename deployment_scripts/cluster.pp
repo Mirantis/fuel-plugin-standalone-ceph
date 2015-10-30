@@ -1,4 +1,4 @@
-notice('MODULAR: cluster.pp')
+notice('MODULAR: standalone-ceph/cluster.pp')
 
 prepare_network_config(hiera_hash('network_scheme'))
 

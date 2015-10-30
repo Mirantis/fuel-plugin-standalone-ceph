@@ -1,4 +1,4 @@
-notice('MODULAR: ceph/mon.pp')
+notice('MODULAR: standalone-ceph/mon.pp')
 
 $storage_hash                   = hiera('storage', {})
 $use_neutron                    = hiera('use_neutron')

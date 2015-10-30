@@ -1,4 +1,4 @@
-notice('MODULAR: ceph_client.pp')
+notice('MODULAR: standalone-ceph/ceph_client.pp')
 
 $ceph_primary_monitor_node = hiera('ceph_primary_monitor_node')
 $primary_mons              = keys($ceph_primary_monitor_node)

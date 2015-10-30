@@ -1,4 +1,4 @@
-notice('MODULAR: ceph/mon.pp')
+notice('MODULAR: standalone-ceph/rados-pki.pp')
 
 include ::ceph::params
 $rgw_nss_db_path = '/etc/ceph/nss'

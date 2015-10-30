@@ -1,4 +1,4 @@
-notice('MODULAR: ceph/radosgw.pp')
+notice('MODULAR: standalone-ceph/radosgw.pp')
 
 $network_metadata = hiera_hash('network_metadata')
 $storage_hash     = hiera('storage', {})

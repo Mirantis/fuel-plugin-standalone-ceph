@@ -1,4 +1,4 @@
-notice('MODULAR: cluster-haproxy.pp')
+notice('MODULAR: standalone-ceph/cluster-haproxy.pp')
 
 $network_scheme     = hiera('network_scheme', {})
 $management_vip     = hiera('management_vip')

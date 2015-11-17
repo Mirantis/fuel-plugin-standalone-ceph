@@ -185,3 +185,13 @@
     timeout: 3600
     cwd: /
 
+- id: configure-default-route-ceph-mon
+  type: puppet
+  role: [primary-standalone-ceph-mon,standalone-ceph-mon]
+  requires: [post_deployment_start]
+  required_for: [post_deployment_end]
+  parameters:
+    puppet_manifest: /etc/puppet/modules/osnailyfacter/modular/netconfig/configure_default_route.pp
+    puppet_modules: /etc/puppet/modules
+    timeout: 3600
+    cwd: /

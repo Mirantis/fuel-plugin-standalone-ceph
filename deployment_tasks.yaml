@@ -32,6 +32,9 @@
 - id: openstack-haproxy-radosgw
   type: skipped
 
+- id: swift-keystone
+  type: skipped
+
 #- id: ceph_create_pools
 #  type: skipped
 
@@ -108,6 +111,7 @@
   groups: [primary-standalone-ceph-mon,standalone-ceph-mon]
   required_for: [deploy_end]
   requires: [standalone-ceph-radosgw]
+  condition: "settings:token-provider.token_provider.value == 'pki' or settings:token-provider.token_provider.value == 'pkiz'"
   parameters:
     puppet_manifest: 'rados-pki.pp'
     puppet_modules: 'modules:/etc/puppet/modules'

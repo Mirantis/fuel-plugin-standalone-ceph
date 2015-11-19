@@ -90,6 +90,10 @@ if $use_ceph and $storage_hash['objects_ceph'] {
   Class ['openstacklib::openstackclient'] -> Class ['ceph::keystone']
   Class ['openstack::auth_file'] -> Class ['ceph::keystone']
 
+  Keystone_endpoint<| title == 'RegionOne/swift' |> {
+    name => "$region/swift",
+  }
+
   class { 'ceph::radosgw':
     # SSL
     use_ssl                          => false,

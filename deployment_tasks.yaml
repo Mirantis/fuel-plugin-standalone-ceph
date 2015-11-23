@@ -58,6 +58,7 @@
 # Standalone mons
 - id: task-standalone-ceph-mon
   type: puppet
+  groups: [primary-standalone-ceph-mon,standalone-ceph-mon]
   required_for: [deploy_end]
   requires: [connectivity_tests,hiera]
   parameters:

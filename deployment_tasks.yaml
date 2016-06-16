@@ -67,7 +67,7 @@
   requires: [connectivity_tests,hiera]
   parameters:
     puppet_manifest: mon.pp
-    puppet_modules: /etc/puppet/modules
+    puppet_modules: /etc/fuel/plugins/standalone-ceph-1.0/modules:/etc/puppet/modules
     timeout: 3600
 
 #RadosGW deployment

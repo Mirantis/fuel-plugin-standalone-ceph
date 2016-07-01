@@ -81,7 +81,8 @@ if $use_ceph and $storage_hash['objects_ceph'] {
     admin_password  => $admin_password,
     admin_tenant    => $admin_tenant,
     region_name     => $region,
-    controller_node => $service_endpoint,
+    #controller_node => $service_endpoint,
+    auth_url        => "http://${service_endpoint}:5000/",
     murano_repo_url => $murano_repo_url,
   }
 

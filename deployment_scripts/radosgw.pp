@@ -55,6 +55,7 @@ if $use_ceph and $storage_hash['objects_ceph'] {
   if ($::osfamily == 'Debian'){
     apache::mod {'rewrite': }
     apache::mod {'fastcgi': }
+    apache::mod {'proxy': }
   }
   include ::tweaks::apache_wrappers
   include ceph::params

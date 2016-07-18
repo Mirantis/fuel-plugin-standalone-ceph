@@ -48,6 +48,16 @@
 - id: enable_rados
   type: skipped
 
+- id: controller-firewall
+  type: puppet
+  groups: [primary-controller, controller]
+  required_for: [firewall]
+  requires: [netconfig]
+  parameters:
+    puppet_manifest: controller-firewall.pp
+    puppet_modules: modules:/etc/puppet/modules
+    timeout: 3600
+
 # Override hiera for at least primary_mon value
 - id: hiera-override-for-standalone-ceph
   type: puppet

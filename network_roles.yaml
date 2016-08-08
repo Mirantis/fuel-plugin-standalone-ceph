@@ -13,8 +13,8 @@
          namespace: 'haproxy'
          alias: 'public_rados_ep'
          node_roles:
-           - 'primary-standalone-ceph-mon'
-           - 'standalone-ceph-mon'
+           - 'primary-ceph-mon'
+           - 'ceph-mon'
 # Unique network role name
 - id: "rados_gw_management_vip"
   # Role mapping to network
@@ -30,5 +30,5 @@
          namespace: 'haproxy'
          alias: 'rados_ep'
          node_roles:
-           - 'primary-standalone-ceph-mon'
-           - 'standalone-ceph-mon'
+           - 'primary-ceph-mon'
+           - 'ceph-mon'

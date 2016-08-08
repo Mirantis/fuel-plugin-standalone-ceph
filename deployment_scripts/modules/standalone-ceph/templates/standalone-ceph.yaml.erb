@@ -1,8 +1,33 @@
 <%
   require 'yaml'
-  hash = {} 
-  hash.store "ceph_monitor_nodes", @ceph_monitor_nodes
-  hash.store "ceph_primary_monitor_node", @ceph_primary_monitor_node
-  hash.store "ceph_rgw_nodes", @ceph_monitor_nodes
+
+  @hash = {}
+  #  This function does some meta-programming. Please don't be scared.
+  #  Just use it as a black box.
+  #  What it does is:
+  #    It takes two or one arguments (if only one argument is provided, it's assumed the second argument is equal to the first one.)
+  #    It tests if `global` variable (in Puppet scope) with the given name exists and set this key (in @settings_hash) to the value of the given variable (the second argument).
+  #    Do nothing otherwise.
+  #
+  def override(hiera_key, puppet_var_name = hiera_key)
+    unless self.instance_variable_get("@#{puppet_var_name.to_s}").nil?
+      @hash.store(hiera_key.to_s, self.instance_variable_get("@#{puppet_var_name.to_s}"))
+    end
+  end
+
+  override(:ceph_monitor_nodes)
+  override(:ceph_primary_monitor_node)
+  override(:ceph_rgw_nodes, :ceph_monitor_nodes)
+  override(:corosync_roles)
+  override(:colocate_haproxy)
+  override(:storage, :storage_hash)
+
+  # NOTE (dukov) class ::ceph roles_include function with hardcoded roles for ceph.
+  # We need to add ceph-mon role to each Monitor node
+  nodes = @ceph_monitor_nodes.reduce({}) do |res, (node, params)|
+    roles = !params['node_roles'].include?('ceph-mon') ? params['node_roles'] + ['ceph-mon'] : params['node_roles']
+    res.merge(node => {'node_roles' => roles})
+  end
+  @hash.store "network_metadata", {'nodes' => nodes}
 -%>
-<%= YAML.dump hash -%>
+<%= YAML.dump @hash -%>

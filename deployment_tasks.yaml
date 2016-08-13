@@ -60,7 +60,7 @@
   type: puppet
   version: 2.1.0
   groups: [primary-ceph-mon, ceph-mon]
-  required_for: [deploy_end, cluster]
+  required_for: [deploy_end, cluster, primary-cluster]
   requires: [firewall]
   reexecute_on: [deploy_changes]
   condition:

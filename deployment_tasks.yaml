@@ -178,6 +178,7 @@
   version: 2.1.0
   groups: [primary-ceph-mon]
   required_for: [deploy_end, controller_remaining_tasks]
+  requires: [openstack-haproxy-radosgw]
   cross-depended-by:
     - name: top-role-ceph-osd
     - name: ceph-compute
@@ -202,6 +203,7 @@
   version: 2.1.0
   groups: [ceph-mon]
   required_for: [deploy_end, controller_remaining_tasks]
+  requires: [openstack-haproxy-radosgw]
   condition:
     yaql_exp: *ceph_mon
   cross-depended-by:

@@ -259,3 +259,20 @@
     puppet_manifest: ceph_client.pp
     puppet_modules: modules:/etc/puppet/modules
     timeout: 3600
+
+- id: ceph_ssl_keys
+  type: puppet
+  version: 2.1.0
+  groups: [primary-ceph-mon, ceph-mon]
+  requires: [firewall]
+  required_for: [deploy_end]
+  condition:
+    yaql_exp:
+      (($.public_ssl.horizon or $.public_ssl.services) and
+         $.public_ssl.cert_source = 'user_uploaded' and
+         changed($.get('standalone-ceph', {}).get('certificate'))) or
+       (changed($.get('use_ssl')) and len($.get('use_ssl', [])) > 0)
+  parameters:
+    puppet_manifest: ssl_keys_saving.pp
+    puppet_modules: modules:/etc/puppet/modules
+    timeout: 3600

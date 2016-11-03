@@ -14,7 +14,20 @@ class ceph_override::ceph::radosgw_keystone {
     $ssl_hash        = hiera_hash('use_ssl', {})
 
     $public_protocol   = get_ssl_property($ssl_hash, $public_ssl_hash, 'radosgw', 'public', 'protocol', 'http')
-    $public_address    = get_ssl_property($ssl_hash, $public_ssl_hash, 'radosgw', 'public', 'hostname', [$public_vip])
+
+    if ( $public_ssl_hash['services'] and $public_ssl_hash['cert_source'] == 'self_signed' ) {
+      $public_address_one    = get_ssl_property($ssl_hash, $public_ssl_hash, 'radosgw', 'public', 'hostname', [$public_vip])
+      $public_address = "rgw.${public_address_one}"
+    }
+
+    elsif ( $public_ssl_hash['services'] and $public_ssl_hash['cert_source'] == 'user_uploaded' ) {
+      $ceph_cash = hiera_hash('standalone-ceph')
+      $public_address = $ceph_cash['dns_hostname']
+    }
+
+    else {
+      $public_address    = get_ssl_property($ssl_hash, $public_ssl_hash, 'radosgw', 'public', 'hostname', [$public_vip])
+    }
 
     $internal_protocol = get_ssl_property($ssl_hash, {}, 'radosgw', 'internal', 'protocol', 'http')
     $internal_address  = get_ssl_property($ssl_hash, {}, 'radosgw', 'internal', 'hostname', [$management_vip])

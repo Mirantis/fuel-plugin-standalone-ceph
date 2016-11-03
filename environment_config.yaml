@@ -2,3 +2,33 @@ attributes:
   metadata:
     label: 'Detach Ceph Monitor Plugin'
     weight: 90
+
+  cluster_name:
+    label: 'Cluster name'
+    type: 'text'
+    value: 'ceph'
+    weight: 100
+    restrictions:
+      - condition: 'settings:standalone-ceph.metadata.enabled == true'
+        action: 'disable'
+
+  certificate:
+    description: 'Certificate and private key data, concatenated into a single file'
+    label: 'Certificate'
+    type: 'file'
+    value: ''
+    weight: 140
+    restrictions: &hide
+      - condition: "settings:public_ssl.services.value == false or settings:public_ssl.cert_source.value == 'self_signed'"
+        action: 'hide'
+
+  dns_hostname:
+    description: 'DNS hostname for public TLS endpoints'
+    label: 'DNS hostname'
+    type: 'text'
+    value: ''
+    weight: 150
+    regex:
+      source: '\S'
+      error: 'Must be a valid DNS name'
+    restrictions: *hide

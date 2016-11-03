@@ -260,6 +260,22 @@
     puppet_modules: modules:/etc/puppet/modules
     timeout: 3600
 
+- id: ceph_hosts
+  type: puppet
+  version: 2.1.0
+  groups: ['/.*/']
+  requires: [deploy_start]
+  required_for: [deploy_end]
+  condition:
+    yaql_exp:
+      (changed($.public_ssl) and
+      ($.public_ssl.horizon or $.public_ssl.services)) or
+      (changed($.get('use_ssl')) and (len($.get('use_ssl', [])) > 0))
+  parameters:
+    puppet_manifest: hosts.pp
+    puppet_modules: modules:/etc/puppet/modules
+    timeout: 3600
+
 - id: ceph_ssl_keys
   type: puppet
   version: 2.1.0
